@@ -1,6 +1,7 @@
 # Importing data management packages:
 import pandas as pd
 from datetime import datetime
+import numpy as np
 
 # Importing Yahoo Finance data api:
 import yfinance as yf
@@ -121,6 +122,9 @@ class price_db_api(object):
             # Writing new slice of timeseries to database:
             most_recent_df.to_sql(ticker_table, con = self.con, if_exists = 'append')
 
+            # Debug print:
+            print(f'[WRITTEN]: {ticker}')
+
             # Updating/Writing data to the Summary Data table:
             self.c.execute(
                 """INSERT OR REPLACE INTO Summary (Ticker, Last_updated)
@@ -139,7 +143,11 @@ class price_db_api(object):
             df.Date = df.Date.apply(lambda x : x.date())
             df.set_index('Date', inplace = True)
 
+            # Writing dataframe to database:
             df.to_sql(ticker_table, con=self.con, if_exists = 'append')
+
+            # Debug print:
+            print(f'[WRITTEN]: {ticker}')
 
             # Updating/Writing data to the Summary Data table:
             self.c.execute(
@@ -150,11 +158,138 @@ class price_db_api(object):
             # Writing changes to db:
             self.con.commit()
 
+    # Method that writes a list of ticker symbols to the database using the update_ticker():
+    def update_tickers(self, ticker_lst):
+        '''
+        Method that ingests a list of ticker strings and iterates through the list
+        and writes each individual ticker to the database via the update_ticker()
+        method.
 
-'''
-'/home/matthew/Documents/test_pdf_databases/stockprice_test.db'
-test = price_db_api('/home/matthew/Documents/test_pdf_databases/stockprice_test.db')
-test.update_ticker('XOM')
-test.update_ticker('TSLA')
-test.update_ticker('FSLR')
-test.update_ticker('ICLN')'''
+        ticker_lst : lst
+            A list of ticker strings to be written/maintained to the database.
+        '''
+        # Iterating through the list of ticker strings:
+        for ticker in ticker_lst:
+
+            # Attempting to write each ticker string in the list:
+            try:
+                self.update_ticker(ticker)
+
+            except:
+                pass
+
+# <---------------------------Database Reading Methods------------------------->
+
+    # Method that is used to query a table from the database based on query strings:
+    def get_table(self, table_name):
+        '''
+        Methods that uses the pandas package to extract a database table using the
+        pd.read_sql_query() method based on an input table name string.
+
+        Parameters
+        ----------
+        table_name : str
+            A string that represents the name of the table in the database.
+
+        Returns
+        -------
+        table_df : pandas dataframe
+            The dataframe containing data that is pulled from the database table.
+        '''
+        # Attempting to extract data, if table is not found return None type:
+        try:
+            # Creating the dataframe:
+            table_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self.con)
+
+            return table_df
+
+        except:
+            return None
+
+    # Method that is used to query the timeseries data of a specific ticker from the database:
+    def get_ticker_table(self, ticker, start_date=None, end_date=None):
+        '''
+        Method that makes use of the pd.read_sql_query() to extract the timeseries
+        data for a specific ticker symbol. It does this by building the name
+        of the database table using the input ticker string: '{ticker}_timeseries'.
+
+        If a start and end date are specified then the dataframe that is returned
+        is sliced within the range of the start_date to end_date inclusive and
+        that slice is returned.
+
+        Parameters
+        ----------
+        ticker : str
+            The string that represents the ticker symbol for which data is being
+            queried. It is used to build the string in the form '{ticker}_timeseries'
+
+        start_date : str
+            A string representing the start date for the dataframe slice. The date
+            must be in the form 'yyyy-mm-dd'. It is by default None.
+
+        end_date : str
+            A string representing the end date for the dataframe slice. The date
+            must be in the form 'yyyy-mm-dd'. It is by default None.
+
+        Returns
+        -------
+        ticker_df : pandas dataframe
+            This is the dataframe that is retrieved from the pd.read_sql_query().
+        '''
+        # Building the ticker table name:
+        table_name = f'{ticker}_timeseries'
+
+        # Extracting the dataframe from the database:
+        ticker_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self.con)
+
+        # Formatting the ticker dataframe:
+        ticker_df.Date = ticker_df.Date.apply(
+            lambda x : datetime.strptime(x, '%Y-%m-%d').date())
+
+        ticker_df.set_index('Date', inplace=True)
+
+        # Conditional that handles the logic for slicing the dataframe based on
+        # start and end date:
+        if start_date != None and end_date == None: # If only a start date is provided:
+
+            # Converting the start_date to a datetime object:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+
+            # Extracting the location of the start_date value from dataframe index:
+            start = ticker_df.index.searchsorted(start_date)
+
+            # Slicing the dataframe based on the start value:
+            ticker_df = ticker_df.iloc[start:]
+
+            return ticker_df
+
+
+        elif start_date == None and end_date != None: # If only an end date is provided:
+
+            # Converting the end date string to a datetime object:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+            # Extracting the location of the end_date value from datetime index:
+            end = ticker_df.index.searchsorted(end_date)
+
+            # Slicing the dataframe based on the end index value:
+            ticker_df = ticker_df.iloc[:end]
+
+            return ticker_df
+
+        elif start_date != None and end_date != None: # If both start and end data are provided:
+
+            # Converting both start and end date to datetime object:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+            # Extracting the start and end location in the dataframe:
+            start = ticker_df.index.searchsorted(start_date)
+            end = ticker_df.index.searchsorted(end_date)
+
+            # Slicing the dataframe based on the start and end values:
+            ticker_df = ticker_df.iloc[start:end]
+
+            return ticker_df
+
+        return ticker_df
