@@ -1,5 +1,5 @@
 # Stock Price Sqlite Database API
-* [Instillation Instructions](placeholder)
+* [Instillation Instructions](https://github.com/MatthewTe/stockprice_database_api#instillation-instructions)
 * [Price Database API](placeholder)
 
 ## Intro
