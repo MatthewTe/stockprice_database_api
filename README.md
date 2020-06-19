@@ -1,6 +1,6 @@
 # Stock Price Sqlite Database API
 * [Instillation Instructions](https://github.com/MatthewTe/stockprice_database_api#instillation-instructions)
-* [Price Database API](placeholder)
+* [Price Database API](https://github.com/MatthewTe/stockprice_database_api#price-database-api)
 
 ## Intro
 This is a package containing an api for creating/maintaining and interacting with a sqlite database containing price time series data on public stocks. This api mainly serves as a python wrapper for the [`yfinance`](https://pypi.org/project/yfinance/) api which in turn interacts with the Yahoo Finance stock web api (have I met my contractual obligation to use the word api as much as possible yet?).
