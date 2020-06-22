@@ -24,7 +24,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir = {'':'stockprice_database_api'},
     install_requires=['yfinance', 'pandas']
 
 )
