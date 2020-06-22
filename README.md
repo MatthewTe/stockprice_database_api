@@ -27,9 +27,9 @@ This is the table that records all the ticker tables that are present in the dat
 
 ### `update_ticker(ticker)`
 This is the method that writes/updates time series price data of a specific ticker. Once the method is called and the ticker string input is valid, if a table does not already exist, a table for the ticker is created with the naming convention `{ticker}_timeseries` with the following schema:
-|Date|Open|High|Low |Close|Volume |Dividends|Stock_Splits|
-|----|----|----|----|-----|-------|---------|------------|
-|TEXT|REAL|REAL|REAL|REAL |INTEGER|REAL     |REAL        |
+|Date|Open|High|Low |Close|Volume |Dividends|Stock_Splits|Historical_Volatility|Annualized_Volatility|
+|----|----|----|----|-----|-------|---------|------------|---------------------|---------------------|
+|TEXT|REAL|REAL|REAL|REAL |INTEGER|REAL     |REAL        |REAL                 |                     |
 
 The `yfinance` `Ticker` object is then initialized with the ticker string. A query is then made to this database for all of the `Date` values and that data is returned as a list.
 
@@ -41,6 +41,9 @@ If the date value list is not empty then the pandas.to_sql method is wrapped in 
 
 It done by determining the most recent date written to the database and then by only writing timeseries data from subsequent dates to the table via the pandas.to_sql method.
 
+The main table values `Date, Open, High, Low, Close, Volume, Dividends and Stock_Splits` are written to the database from the `yfinance` package. The rest of the table columns contain values derived from the core `yfinance` data and are inserted/written to the database via other "helper" methods, mainly the `.add_timeseries_technicals()` method.
+
+**TODO: Describe how all helper methods facilitate writing data to the database.**
 
 ### `update_tickers(ticker_lst)`
 This method is just an iterative wrapper over the earlier `update_ticker()` method. In ingests a list of ticker strings and for each ticker string calls the `update_ticker()` method with all of its subsequent logic and table update handling.
@@ -66,4 +69,3 @@ This is a query method that is intended to be used to specifically query timeser
 It does this by wrapping the previously used `pandas.read_sql_query()` method in logic that only requires the input of the ticker symbol with optional start and end date values that modify what timeseries is read from the database.
 
 It should be noted that specifying a specific date time does not reduce read times from the database as the method extracts the entire ticker timeseries table, converts the `Date` value to `datetime` objects and then uses those date time objects to slice the entire dataframe into the timeseries specified by the `start_date` and `end_date` values. In other words it is irrelevant either or not dates are specified as a bulk data query is being executed either way.
- 

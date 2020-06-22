@@ -84,7 +84,9 @@ class price_db_api(object):
                 Close REAL,
                 Volume INTEGER,
                 Dividends REAL,
-                Stock_Splits REAL)""")
+                Stock_Splits REAL,
+                Historical_Volatility REAL,
+                Annualized_Volatility REAL)""")
 
         # Writing table changes to database before performing table insertions:
         self.con.commit()
@@ -119,20 +121,27 @@ class price_db_api(object):
             most_recent_df.rename(columns = {'Stock Splits': 'Stock_Splits'}, inplace= True)
             most_recent_df.set_index('Date', inplace=True)
 
-            # Writing new slice of timeseries to database:
-            most_recent_df.to_sql(ticker_table, con = self.con, if_exists = 'append')
+            try: # NOTE: Current Error with algorithm to detect duplicate dates if weekend. Try-Catch patch.
+                # Writing new slice of timeseries to database:
+                most_recent_df.to_sql(ticker_table, con = self.con, if_exists = 'append')
 
-            # Debug print:
-            print(f'[WRITTEN]: {ticker}')
+                # Debug print:
+                print(f'[WRITTEN]: {ticker}')
 
-            # Updating/Writing data to the Summary Data table:
-            self.c.execute(
-                """INSERT OR REPLACE INTO Summary (Ticker, Last_updated)
-                VALUES (:ticker, :Last_updated)""",
-                {'ticker':ticker, 'Last_updated': datetime.now().date()})
+                # Updating/Writing data to the Summary Data table:
+                self.c.execute(
+                    """INSERT OR REPLACE INTO Summary (Ticker, Last_updated)
+                    VALUES (:ticker, :Last_updated)""",
+                    {'ticker':ticker, 'Last_updated': datetime.now().date()})
 
-            # Writing changes to db:
-            self.con.commit()
+                # Writing changes to db:
+                self.con.commit()
+
+            except: # Noting the except catch has been triggered:
+
+                raise Exception("""[DATE UPDATE ALGORITHM ERROR]: Conflict
+between new and old datetime values. Is it an off trading day?""")
+
 
         # If the table was empty populate it with whole timeseries from api:
         else:
@@ -293,3 +302,31 @@ class price_db_api(object):
             return ticker_df
 
         return ticker_df
+
+# <--------------------------"Helper" Method----------------------------------->
+
+    # Method that ingests a dataframe of price history and calculates Historical Volatility:
+    def add_timeseries_technicals(self, dataframe):
+        '''
+        Method ingests a standard dataframe from the {ticker}_timeseries table in
+        the database in the format: Date, Open, High, Low, Close, Dividends, Stock_Splits
+        (OHLC).
+
+        It then calculates technical/statistical indicators and inserts them into
+        the standard dataframe. The technical indicators that are added to the
+        dataframe are as follows:
+
+        - 1-day Historical Volatility using Closing prices.
+        - Annualized Historical Volatility
+        - 12-Period EMA
+        - 26-Period EMA
+        - MACD Value
+        - RSI
+        '''
+        # TODO: Write Method.
+        # # TODO: Update README Documentation when add_timeseries_technicals is complete.
+
+# Test:
+test = price_db_api("/home/matthew/Documents/test_pdf_databases/stockprice_test.db")
+test.update_ticker("XOM")
+print(test.get_ticker_table('XOM'))
