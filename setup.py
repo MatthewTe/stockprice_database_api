@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="stockprice_db_api",
-    version="0.1.0",
+    version="0.1.1",
     description="A package that wraps the yfinance Yahoo Finance api in an api that interacts and maintains a sqlite database.",
     long_description=long_description,
     url="https://github.com/MatthewTe/stockprice_database_api",
@@ -24,6 +24,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['yfinance', 'pandas']
+    install_requires=['yfinance', 'pandas', 'numpy']
 
 )
