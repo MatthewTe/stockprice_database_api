@@ -13,9 +13,9 @@ pip install pandas
 ```
 
 ## Price Database API
-The script `pricedb_api.py` contains the main method `price_db_api` which contains all the api's necessary to interact with the price database.
+The script `stock_timeseries_api.py` contains the main method `stock_timeseries_api` which contains all the api's necessary to interact with the price database.
 
-### `price_db_api(db_path)`
+### `stock_timeseries_api(db_path)`
 This is the main object that connects to the database. All subsequent methods require that this method be initialized with the path of the sqlite database file input as a string.
 
 Once initialized, if the sqlite file does not exits it is created and then the `Summary` table is created and written to the database if it does not already exist:
@@ -104,7 +104,7 @@ This is a brute force query method. It queries the database using the `pandas.re
 Example:
 ```python
 # Initializing connection to database:
-test = price_db_api('path_to_sqlite_database')
+test = stock_timeseries_api('path_to_sqlite_database')
 
 # Calling the timeseries price data for Exxon:
 test.get_table('XOM_timeseries')

@@ -11,7 +11,7 @@ import sqlite3
 
 
 # Object that represents the connection in the sqlite3 database:
-class price_db_api(object):
+class stock_timeseries_api(object):
     """
     Much like the  pdf_db in the pdf database api this object represents the
     sqlite database.
@@ -211,7 +211,7 @@ class price_db_api(object):
         technical_df.MACD = (technical_df.Twelve_EMA - technical_df.Twenty_Six_EMA)
 
         # Calculating and inserting RSI Value with period of 14 days:
-        technical_df.RSI = price_db_api.calc_rsi(technical_df.Close_Price, 14)
+        technical_df.RSI = stock_timeseries_api.calc_rsi(technical_df.Close_Price, 14)
 
         # Writing the technicals dataframe to the database:
         technical_df.to_sql(table_name, con=self.con, if_exists='replace')
@@ -388,6 +388,7 @@ class price_db_api(object):
         return ticker_dict
 
 # <--------------------------"Helper" Method----------------------------------->
+
     # Method that calculates the RSI technical values from a dataframe column:
     def calc_rsi(data_series, period):
         '''
